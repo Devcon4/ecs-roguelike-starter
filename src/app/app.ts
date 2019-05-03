@@ -1,15 +1,36 @@
 import { appSystems } from "./app-systems";
 import { Engine, Entity } from "../ecs";
-import { PositionComponent } from "./components";
-import * as components from './components';
+import { PositionComponent, RenderComponent } from './components';
 import { blueprints, BlueprintType } from "./blueprints";
 
 export class App {
-    engine: Engine;
+    componets = [
+        PositionComponent,
+        RenderComponent
+    ];
+
+    engine = new Engine(this.componets, BlueprintType);
 
     constructor() {
-        this.engine = new Engine(components, blueprints, BlueprintType);
+        this.engine.addBlueprint({
+            name: 'Renderable',
+            components: [
+                {component: PositionComponent, values: {}},
+                {component: RenderComponent, values: null}
+            ],
+            blueprints: []
+        });
+        this.engine.addBlueprint({
+            name: 'Player',
+            blueprints: ['renderable'],
+            components: [
+                {component: RenderComponent, values: {value: "@"}}
+            ]
+        });
+
+        this.engine.start();
         this.engine.addSystems(...appSystems);
+
         let entity = new Entity();
         entity.putComponent(PositionComponent);
         this.engine.addEntity(entity);

@@ -1,4 +1,6 @@
-interface Component {}
+interface Component {
+  readonly name: string;
+}
 
 interface ComponentClass<T extends Component> {
   readonly name: string;

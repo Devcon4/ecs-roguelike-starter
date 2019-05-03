@@ -1,6 +1,6 @@
 import { Blueprint } from "../../ecs";
 
-export var blueprints: Blueprint[] = [
+export var blueprints = [
     {
         name: "Renderable",
         components: [

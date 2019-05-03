@@ -1,7 +1,8 @@
 import { Entity } from "./entity";
 import { System } from "./system";
 import { EntityFactory } from "./entity-factory";
-import { Blueprint } from "./blueprint";
+import { Blueprint, BlueprintComponent } from "./blueprint";
+import { Component } from './component';
 
 interface EngineEntityListener {
   onEntityAdded(entity: Entity): void;
@@ -13,19 +14,22 @@ interface EngineEntityListener {
  * You may have one Engine in your application, but you can make as many as
  * you want.
  */
-class Engine {
+class Engine<T extends Component[]> {
   /** Private array containing the current list of added entities. */
   private _entities: Entity[] = [];
   /** Private list of entity listeners */
   private readonly _entityListeners: EngineEntityListener[] = [];
   /** Private list of added systems. */
-  private readonly _systems: System[] = [];
+  private readonly _systems: System<T>[] = [];
   /** Checks if the system needs sorting of some sort */
   private _systemsNeedSorting: boolean = false;
   /** Factory for creating entities based off blueprints */
-  private entityFactory: EntityFactory;
+  private entityFactory: EntityFactory<T>;
   /** Enum of all blueprints for type checking purposes */
   private blueprintTypes;
+
+  private _blueprints: Blueprint<T>[] = [];
+  private _components: T;
 
   /**
    * Constructs new engine.
@@ -33,10 +37,15 @@ class Engine {
    * @param components Exported module containing all components.
    * @param blueprintTypes Optional enum of blueprint types for type checking. 
    */
-  constructor(components, blueprints: Blueprint[], blueprintTypes?) {
-    this.entityFactory = new EntityFactory(blueprints, components);
+  constructor(components: T, blueprintTypes?) {
     this.blueprintTypes = blueprintTypes ? blueprintTypes : undefined;
+    this._components = components;
   }
+
+  start() {
+    this.entityFactory = new EntityFactory(this._blueprints, this._components);
+  }
+
   /**
    * Builds entity from blueprint.
    * @param type The enum type or name of blueprint to create entity from. 
@@ -62,7 +71,7 @@ class Engine {
    * Alerts the engine to sort systems by priority.
    * @param system The system than changed priority
    */
-  notifyPriorityChange(system: System) {
+  notifyPriorityChange(system: System<T>) {
     this._systemsNeedSorting = true;
   }
 
@@ -104,6 +113,7 @@ class Engine {
     return this;
   }
 
+  
   /**
    * Add a list of entities to the engine.
    * The listeners will be notified once per entity.
@@ -116,6 +126,18 @@ class Engine {
     return this;
   }
 
+  addBlueprint(blueprint: Blueprint<T>) {
+    if (this._blueprints.indexOf(blueprint) === -1) {
+      this._blueprints.push(blueprint);
+
+      // Fix blueprintFactory.
+    }
+  }
+
+  addBlueprints(...blueprints: Blueprint<T>[]) {
+    blueprints.forEach(this.addBlueprint.bind(this));
+  }
+  
   /**
    * Removes an entity to the engine.
    * The listeners will be notified.
@@ -147,7 +169,7 @@ class Engine {
    * Adds a system to the engine.
    * @param system The system to add.
    */
-  addSystem(system: System) {
+  addSystem(system: System<T>) {
     const index = this._systems.indexOf(system);
     if (index === -1) {
       this._systems.push(system);
@@ -161,7 +183,7 @@ class Engine {
    * Adds a list of systems to the engine.
    * @param systems The list of systems to add.
    */
-  addSystems(...systems: System[]) {
+  addSystems(...systems: System<T>[]) {
     for (let system of systems) {
       this.addSystem(system);
     }
@@ -171,7 +193,7 @@ class Engine {
    * Removes a system to the engine.
    * @param system The system to remove.
    */
-  removeSystem(system: System) {
+  removeSystem(system: System<T>) {
     const index = this._systems.indexOf(system);
     if (index !== -1) {
       this._systems.splice(index, 1);
@@ -184,7 +206,7 @@ class Engine {
    * Removes a list of systems to the engine.
    * @param systems The list of systems to remove.
    */
-  removeSystems(...systems: System[]) {
+  removeSystems(...systems: System<T>[]) {
     for (let system of systems) {
       this.removeSystem(system);
     }

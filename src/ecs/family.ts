@@ -23,13 +23,13 @@ interface Family {
  * This class is private to this module.
  * @private
  */
-abstract class AbstractFamily implements Family {
-  private readonly _engine: Engine;
+abstract class AbstractFamily<T extends Component[]> implements Family {
+  private readonly _engine: Engine<T>;
   private readonly _include: ReadonlyArray<ComponentClass<Component>>;
   private readonly _exclude: ReadonlyArray<ComponentClass<Component>>;
 
   constructor(
-    engine: Engine,
+    engine: Engine<T>,
     include: ComponentClass<Component>[],
     exclude: ComponentClass<Component>[]
   ) {
@@ -64,12 +64,12 @@ abstract class AbstractFamily implements Family {
  * when an entity changes.
  *
  */
-class CachedFamily extends AbstractFamily {
+class CachedFamily<T extends Component[]> extends AbstractFamily<T> {
   private _needEntityRefresh: boolean;
   private _entities: Entity[];
 
   constructor(
-    engine: Engine,
+    engine: Engine<T>,
     include: ComponentClass<Component>[],
     exclude: ComponentClass<Component>[]
   ) {
@@ -125,7 +125,7 @@ class CachedFamily extends AbstractFamily {
  * You can use this instead.
  * @private
  */
-class NonCachedFamily extends AbstractFamily {
+class NonCachedFamily<T extends Component[]> extends AbstractFamily<T> {
   get entities() {
     return this.engine.entities.filter(this.includesEntity);
   }
@@ -135,13 +135,13 @@ class NonCachedFamily extends AbstractFamily {
  * Utility class to build Families.
  * It's the only way to create the implementations of CachedFamily and NonCachedFamily.
  */
-class FamilyBuilder {
-  private _engine: Engine | null;
+class FamilyBuilder<T extends Component[]> {
+  private _engine: Engine<T>| null;
   private _cached: boolean;
   private readonly _include: ComponentClass<Component>[];
   private readonly _exclude: ComponentClass<Component>[];
 
-  constructor(engine?: Engine) {
+  constructor(engine?: Engine<T>) {
     this._engine = engine || null;
     this._include = [];
     this._exclude = [];
@@ -173,7 +173,7 @@ class FamilyBuilder {
    * engines.
    * @param engine
    */
-  changeEngine(engine: Engine) {
+  changeEngine(engine: Engine<T>) {
     this._engine = engine;
     return this;
   }

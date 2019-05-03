@@ -1,13 +1,14 @@
 import { BlueprintClass, BlueprintComponent, Blueprint } from "./blueprint";
 import { Entity } from "./entity";
+import { Component } from './component';
 
-export class EntityFactory {
-    private blueprints: BlueprintClass[] = [];
+export class EntityFactory<T extends Component[]> {
+    private blueprints: BlueprintClass<T>[] = [];
     private components;
 
     // TODO - Consider a caching strategy if we've already built an entity;
     
-    constructor(blueprintTemplates: Blueprint[], componentModule) {
+    constructor(blueprintTemplates: Blueprint<T>[], componentModule) {
         if(this.validateBlueprints(blueprintTemplates)) {
             this.components = componentModule;
             this.blueprints = this.buildBlueprintsFromTemplates(blueprintTemplates);
@@ -23,7 +24,7 @@ export class EntityFactory {
         return this.getEntityFromBlueprint(this.getBlueprintFromName(name), new Entity());
     }
 
-    private getEntityFromBlueprint(blueprint: BlueprintClass, entity: Entity): Entity {
+    private getEntityFromBlueprint(blueprint: BlueprintClass<T>, entity: Entity): Entity {
 
         // Recursively add components from inherited blueprints
         blueprint.blueprintNames.forEach(x => {
@@ -43,7 +44,7 @@ export class EntityFactory {
         return entity;
     }
 
-    private getBlueprintFromName(name: string): BlueprintClass {
+    private getBlueprintFromName(name: string): BlueprintClass<T> {
         let blueprint = this.blueprints.find(x => x.name === name);
         if (!blueprint) {
             throw new Error("Cannot find blueprint by that name.");
@@ -51,7 +52,7 @@ export class EntityFactory {
         return blueprint;
     }
 
-    private buildBlueprintsFromTemplates(blueprintTemplates: Blueprint[]): BlueprintClass[] {
+    private buildBlueprintsFromTemplates(blueprintTemplates: Blueprint<T>[]): BlueprintClass<T>[] {
         return blueprintTemplates.map(x =>
             new BlueprintClass({
                 name: x.name,
@@ -61,7 +62,7 @@ export class EntityFactory {
         );
     }
 
-    private hasBlueprints(blueprintTemplate: Blueprint) {
+    private hasBlueprints(blueprintTemplate: Blueprint<T>) {
         return blueprintTemplate.blueprints && blueprintTemplate.blueprints.length > 0;
     }
 
@@ -70,7 +71,7 @@ export class EntityFactory {
      * @throws if the list is empty.
      * @param components template array for the blueprints components.
     */
-    private getComponentsFromTemplates(components): BlueprintComponent[] {
+    private getComponentsFromTemplates(components): BlueprintComponent<T>[] {
         if (!components || components.length === 0) {
             throw new Error("Blueprint must implement one or more components.");
         } else {
@@ -81,7 +82,7 @@ export class EntityFactory {
         }
     }
 
-    private validateBlueprints(blueprints: Blueprint[]): boolean {
+    private validateBlueprints(blueprints: Blueprint<T>[]): boolean {
         if(!blueprints || !Array.isArray(blueprints)) {
             throw new Error('Must input array of blueprint templates.');
         }
